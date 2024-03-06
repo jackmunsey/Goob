@@ -1,0 +1,8 @@
+{
+    "motorModel": "Talon",
+    "motorType": "BRUSHED",
+    "port": 0,
+    "isInverted": false,
+    "neutralOperation": "BRAKE",
+    "currentLimit": 40
+}
