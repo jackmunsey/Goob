@@ -4,6 +4,10 @@
 
 package frc.robot;
 
+import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkLowLevel.MotorType;
+
 import SOTAlib.Config.CompositeMotorConfig;
 import SOTAlib.Config.ConfigUtils;
 import SOTAlib.Config.EncoderConfig;
@@ -106,15 +110,14 @@ public class RobotContainer {
     try{
     //makes the motor controlers
 
-      CompositeMotorFactory mCompositeMotorFactory = new CompositeMotorFactory();
-      SOTA_CompositeMotor sparkMax_IntakeAngleCompositeMotor = mCompositeMotorFactory.generateCompositeMotor(mConfigUtils.readFromClassPath(CompositeMotorConfig.class, "SparkMax_IntakeAngle"));
+    CANSparkMax sparkMax_WristMotor = new CANSparkMax(6, MotorType.kBrushless);
+    AbsoluteEncoder sparkMax_WristEncoder = sparkMax_WristMotor.getAbsoluteEncoder(com.revrobotics.SparkAbsoluteEncoder.Type.kDutyCycle);
 
-      //MotorControllerConfig sparkMax_IntakeAngleConfig = mConfigUtils.readFromClassPath(MotorControllerConfig.class, "SparkMax_IntakeAngle");
-      //SOTA_MotorController sparkMax_IntakeAngle = MotorControllerFactory.generateMotorController(sparkMax_IntakeAngleConfig);
-      MotorControllerConfig sparkMax_IntakeIntakeConfig = mConfigUtils.readFromClassPath(MotorControllerConfig.class, "SparkMax_IntakeIntake");
-      SOTA_MotorController sparkMax_IntakeIntake = MotorControllerFactory.generateMotorController(sparkMax_IntakeIntakeConfig);
+    MotorControllerConfig sparkMax_IntakeIntakeConfig = mConfigUtils.readFromClassPath(MotorControllerConfig.class, "SparkMax_IntakeIntake");
+    SOTA_MotorController sparkMax_IntakeMotor = MotorControllerFactory.generateMotorController(sparkMax_IntakeIntakeConfig);
 
-      mIntake = new Intake(sparkMax_IntakeAngleCompositeMotor.getMotor(),sparkMax_IntakeIntake, sparkMax_IntakeAngleCompositeMotor.getAbsEncoder());
+
+    mIntake = new Intake(sparkMax_WristMotor, sparkMax_IntakeMotor, sparkMax_WristEncoder);
       
 
     } catch (Exception e) {
