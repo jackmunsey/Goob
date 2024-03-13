@@ -4,6 +4,12 @@
 
 package frc.robot;
 
+import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkBase.ControlType;
+import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.SparkAbsoluteEncoder.Type;
+
 import SOTAlib.Config.CompositeMotorConfig;
 import SOTAlib.Config.ConfigUtils;
 import SOTAlib.Config.EncoderConfig;
@@ -25,6 +31,7 @@ import frc.robot.SubSystems.Climber;
 import frc.robot.SubSystems.Drive;
 import frc.robot.SubSystems.Intake;
 import frc.robot.SubSystems.Shooter;
+import frc.robot.SubSystems.Wrist;
 
 public class RobotContainer {
   Drive mDrive;
@@ -34,6 +41,7 @@ public class RobotContainer {
   ConfigUtils mConfigUtils;
   AMP mAMP;
   Intake mIntake;
+  Wrist mWrist;
   
   
 
@@ -105,18 +113,22 @@ public class RobotContainer {
 
     try{
     //makes the motor controlers
-
-      CompositeMotorFactory mCompositeMotorFactory = new CompositeMotorFactory();
-      SOTA_CompositeMotor sparkMax_IntakeAngleCompositeMotor = mCompositeMotorFactory.generateCompositeMotor(mConfigUtils.readFromClassPath(CompositeMotorConfig.class, "SparkMax_IntakeAngle"));
-
-      //MotorControllerConfig sparkMax_IntakeAngleConfig = mConfigUtils.readFromClassPath(MotorControllerConfig.class, "SparkMax_IntakeAngle");
-      //SOTA_MotorController sparkMax_IntakeAngle = MotorControllerFactory.generateMotorController(sparkMax_IntakeAngleConfig);
       MotorControllerConfig sparkMax_IntakeIntakeConfig = mConfigUtils.readFromClassPath(MotorControllerConfig.class, "SparkMax_IntakeIntake");
-      SOTA_MotorController sparkMax_IntakeIntake = MotorControllerFactory.generateMotorController(sparkMax_IntakeIntakeConfig);
+      SOTA_MotorController intakeMotor = MotorControllerFactory.generateMotorController(sparkMax_IntakeIntakeConfig);
 
-      mIntake = new Intake(sparkMax_IntakeAngleCompositeMotor.getMotor(),sparkMax_IntakeIntake, sparkMax_IntakeAngleCompositeMotor.getAbsEncoder());
+      mIntake = new Intake(intakeMotor);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    try{
+    //makes the motor controlers
+      CANSparkMax wristMotor = new CANSparkMax(6, MotorType.kBrushless);
+      AbsoluteEncoder wristEncoder = wristMotor.getAbsoluteEncoder(Type.kDutyCycle);
+
+      mWrist = new Wrist(wristMotor, wristEncoder);
       
-
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -132,12 +144,10 @@ public class RobotContainer {
     mDrive.drive(mXboxController.getLeftY()*-1,mXboxController.getLeftX()*-1)
     ,mDrive));
 
-    mIntake.setDefaultCommand(Commands.run(() -> 
-    mIntake.intakeAngle(mXboxController.getRightY()*-1)
-    ,mIntake));
+    mXboxController.leftBumper().onTrue(Commands.run(() -> mIntake.intakeIntake(-1), mIntake)).onFalse(Commands.runOnce(() -> mIntake.intakeIntake(0), mIntake));
+    mXboxController.rightBumper().onTrue(Commands.run(() -> mIntake.intakeIntake(1), mIntake)).onFalse(Commands.runOnce(() -> mIntake.intakeIntake(0), mIntake));
 
-    mXboxController.rightBumper().onTrue(Commands.run(() -> mIntake.intakeIntake(-1l), mIntake)).onFalse(Commands.runOnce(() -> mIntake.intakeIntake(0), mIntake));
-    mXboxController.leftBumper().onTrue(Commands.run(() -> mIntake.intakeIntake(1), mIntake)).onFalse(Commands.runOnce(() -> mIntake.intakeIntake(0), mIntake));
+    mXboxController.rightTrigger().onTrue(Commands.run(() -> mWrist.setSetPoint(.54), mIntake)).onFalse(Commands.runOnce(() -> mWrist.setSetPoint(0), mIntake));
 
 
     mXboxController.a().onTrue(Commands.run(() -> mShooter.shoot(1,1), mShooter)).onFalse(Commands.runOnce(() -> mShooter.shoot(0,0), mShooter));
